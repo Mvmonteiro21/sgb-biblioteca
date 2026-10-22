@@ -4,6 +4,7 @@ import unicodedata
 from dataclasses import dataclass
 from datetime import date
 
+from sgb.dominio.eventos import ExemplarReservado
 from sgb.dominio.excecoes import (
     DadoInvalido,
     ExemplarDisponivelParaEmprestimo,
@@ -46,6 +47,7 @@ class Livro:
             codigo = CodigoExemplar.para(isbn, sequencia)
             self._exemplares[codigo] = Exemplar(codigo)
         self._fila: list[Reserva] = []
+        self._eventos: list[ExemplarReservado] = []
 
     @property
     def exemplares(self) -> tuple[Exemplar, ...]:
@@ -77,10 +79,10 @@ class Livro:
         exemplar.emprestar(cpf)
         return exemplar
 
-    def devolver(self, codigo: CodigoExemplar) -> Reserva | None:
+    def devolver(self, codigo: CodigoExemplar) -> None:
         exemplar = self.exemplar(codigo)
         exemplar.devolver()
-        return self._atender_fila(exemplar)
+        self._atender_fila(exemplar)
 
     def reservar(self, cpf: CPF, hoje: date) -> Reserva:
         if any(e.pode_ser_emprestado_a(cpf) for e in self._exemplares.values()):
@@ -102,10 +104,16 @@ class Livro:
         if self._fila:
             raise RenovacaoNegada
 
-    def _atender_fila(self, exemplar: Exemplar) -> Reserva | None:
+    def recolher_eventos(self) -> list[ExemplarReservado]:
+        eventos, self._eventos = self._eventos, []
+        return eventos
+
+    def _atender_fila(self, exemplar: Exemplar) -> None:
         """Regra: exemplar devolvido é reservado automaticamente para o 1º da fila."""
         if not self._fila:
-            return None
+            return
         reserva = self._fila.pop(0)
         exemplar.reservar_para(reserva.cpf)
-        return reserva
+        self._eventos.append(
+            ExemplarReservado(reserva.cpf, self.isbn, self.titulo, exemplar.codigo)
+        )

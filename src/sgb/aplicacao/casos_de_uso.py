@@ -87,10 +87,10 @@ class RegistrarDevolucao:
         emprestimo = self._emprestimos.em_aberto_do_exemplar(codigo)
         emprestimo.devolver(self._relogio.hoje())
         livro = self._livros.buscar_por_isbn(emprestimo.isbn)
-        reserva = livro.devolver(codigo)
-        if reserva is not None:
-            membro = self._membros.buscar(reserva.cpf)
-            self._notificador.avisar_reserva_disponivel(membro, livro.titulo)
+        livro.devolver(codigo)
+        for evento in livro.recolher_eventos():
+            membro = self._membros.buscar(evento.cpf)
+            self._notificador.avisar_reserva_disponivel(membro, evento.titulo)
         self._livros.salvar(livro)
         self._emprestimos.salvar(emprestimo)
 
