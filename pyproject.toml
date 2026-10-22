@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sgb"
+version = "0.1.0"
+description = "SGB - Sistema de Gestão de uma Biblioteca Comunitária"
+requires-python = ">=3.11"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "."]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM", "C90"]
+ignore = ["N818"]  # erros de domínio têm nome de regra de negócio, sem sufixo "Error"
+
+[tool.ruff.lint.mccabe]
+max-complexity = 8
