@@ -1,4 +1,4 @@
-from enum import StrEnum
+"""Exemplar: cópia física de um livro. Seu ciclo de vida é um padrão State."""
 
 from sgb.dominio.excecoes import (
     ExemplarIndisponivel,
@@ -8,46 +8,84 @@ from sgb.dominio.excecoes import (
 from sgb.dominio.valores import CPF, CodigoExemplar
 
 
-class SituacaoDoExemplar(StrEnum):
-    DISPONIVEL = "disponível"
-    EMPRESTADO = "emprestado"
-    RESERVADO = "reservado"
+class EstadoDoExemplar:
+    """Papel State: cada situação decide o que é permitido e qual o próximo estado."""
+
+    nome = ""
+    esta_disponivel = False
+
+    def pode_ser_emprestado_a(self, cpf: CPF) -> bool:
+        return False
+
+    def emprestar(self, cpf: CPF) -> "EstadoDoExemplar":
+        raise ExemplarIndisponivel("Exemplar já está emprestado")
+
+    def devolver(self) -> "EstadoDoExemplar":
+        raise TransicaoInvalidaDoExemplar(f"Exemplar {self.nome} não pode ser devolvido")
+
+    def reservar_para(self, cpf: CPF) -> "EstadoDoExemplar":
+        raise TransicaoInvalidaDoExemplar(f"Exemplar {self.nome} não pode ser reservado")
+
+
+class Disponivel(EstadoDoExemplar):
+    nome = "disponível"
+    esta_disponivel = True
+
+    def pode_ser_emprestado_a(self, cpf: CPF) -> bool:
+        return True
+
+    def emprestar(self, cpf: CPF) -> EstadoDoExemplar:
+        return Emprestado()
+
+    def reservar_para(self, cpf: CPF) -> EstadoDoExemplar:
+        return ReservadoParaMembro(cpf)
+
+
+class Emprestado(EstadoDoExemplar):
+    nome = "emprestado"
+
+    def devolver(self) -> EstadoDoExemplar:
+        return Disponivel()
+
+
+class ReservadoParaMembro(EstadoDoExemplar):
+    nome = "reservado"
+
+    def __init__(self, membro: CPF) -> None:
+        self.membro = membro
+
+    def pode_ser_emprestado_a(self, cpf: CPF) -> bool:
+        return cpf == self.membro
+
+    def emprestar(self, cpf: CPF) -> EstadoDoExemplar:
+        if cpf != self.membro:
+            raise ExemplarReservadoParaOutroMembro
+        return Emprestado()
 
 
 class Exemplar:
-    """Cópia física de um livro."""
+    """Papel Context: delega ao estado atual."""
 
     def __init__(self, codigo: CodigoExemplar) -> None:
         self.codigo = codigo
-        self.situacao = SituacaoDoExemplar.DISPONIVEL
-        self.reservado_para: CPF | None = None
+        self._estado: EstadoDoExemplar = Disponivel()
+
+    @property
+    def situacao(self) -> str:
+        return self._estado.nome
 
     @property
     def esta_disponivel(self) -> bool:
-        return self.situacao == SituacaoDoExemplar.DISPONIVEL
+        return self._estado.esta_disponivel
 
     def pode_ser_emprestado_a(self, cpf: CPF) -> bool:
-        if self.situacao == SituacaoDoExemplar.DISPONIVEL:
-            return True
-        if self.situacao == SituacaoDoExemplar.RESERVADO:
-            return self.reservado_para == cpf
-        return False
+        return self._estado.pode_ser_emprestado_a(cpf)
 
     def emprestar(self, cpf: CPF) -> None:
-        if self.situacao == SituacaoDoExemplar.EMPRESTADO:
-            raise ExemplarIndisponivel("Exemplar já está emprestado")
-        if self.situacao == SituacaoDoExemplar.RESERVADO and self.reservado_para != cpf:
-            raise ExemplarReservadoParaOutroMembro
-        self.situacao = SituacaoDoExemplar.EMPRESTADO
-        self.reservado_para = None
+        self._estado = self._estado.emprestar(cpf)
 
     def devolver(self) -> None:
-        if self.situacao != SituacaoDoExemplar.EMPRESTADO:
-            raise TransicaoInvalidaDoExemplar(f"Exemplar {self.situacao} não pode ser devolvido")
-        self.situacao = SituacaoDoExemplar.DISPONIVEL
+        self._estado = self._estado.devolver()
 
     def reservar_para(self, cpf: CPF) -> None:
-        if self.situacao != SituacaoDoExemplar.DISPONIVEL:
-            raise TransicaoInvalidaDoExemplar(f"Exemplar {self.situacao} não pode ser reservado")
-        self.situacao = SituacaoDoExemplar.RESERVADO
-        self.reservado_para = cpf
+        self._estado = self._estado.reservar_para(cpf)
