@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 
+from sgb.aplicacao.assinantes import NotificarMembroDeReserva
 from sgb.aplicacao.casos_de_uso import (
     CadastrarLivro,
     CadastrarMembro,
@@ -12,7 +13,9 @@ from sgb.aplicacao.casos_de_uso import (
     RenovarEmprestimo,
     ReservarLivro,
 )
+from sgb.dominio.eventos import ExemplarReservado
 from sgb.dominio.portas import NotificadorDeMembro, Relogio
+from sgb.dominio.publicador import PublicadorDeEventos
 from sgb.infra.memoria import (
     RepositorioDeEmprestimosEmMemoria,
     RepositorioDeLivrosEmMemoria,
@@ -42,11 +45,14 @@ def montar_aplicacao(
     membros = RepositorioDeMembrosEmMemoria()
     livros = RepositorioDeLivrosEmMemoria()
     emprestimos = RepositorioDeEmprestimosEmMemoria()
+    publicador = PublicadorDeEventos()
+    publicador.inscrever(ExemplarReservado, NotificarMembroDeReserva(membros, notificador))
+
     return Aplicacao(
         cadastrar_membro=CadastrarMembro(membros),
         cadastrar_livro=CadastrarLivro(livros),
         registrar_emprestimo=RegistrarEmprestimo(membros, livros, emprestimos, relogio),
-        registrar_devolucao=RegistrarDevolucao(membros, livros, emprestimos, relogio, notificador),
+        registrar_devolucao=RegistrarDevolucao(livros, emprestimos, relogio, publicador),
         renovar_emprestimo=RenovarEmprestimo(livros, emprestimos),
         consultar_disponibilidade=ConsultarDisponibilidade(livros),
         reservar_livro=ReservarLivro(membros, livros, relogio),

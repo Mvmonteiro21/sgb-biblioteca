@@ -8,12 +8,12 @@ from sgb.dominio.excecoes import RegistroDuplicado
 from sgb.dominio.livro import Disponibilidade, Livro
 from sgb.dominio.membro import Membro
 from sgb.dominio.portas import (
-    NotificadorDeMembro,
     Relogio,
     RepositorioDeEmprestimos,
     RepositorioDeLivros,
     RepositorioDeMembros,
 )
+from sgb.dominio.publicador import PublicadorDeEventos
 from sgb.dominio.valores import CPF, ISBN, CodigoExemplar, Telefone
 
 
@@ -70,17 +70,15 @@ class RegistrarEmprestimo:
 class RegistrarDevolucao:
     def __init__(
         self,
-        membros: RepositorioDeMembros,
         livros: RepositorioDeLivros,
         emprestimos: RepositorioDeEmprestimos,
         relogio: Relogio,
-        notificador: NotificadorDeMembro,
+        publicador: PublicadorDeEventos,
     ) -> None:
-        self._membros = membros
         self._livros = livros
         self._emprestimos = emprestimos
         self._relogio = relogio
-        self._notificador = notificador
+        self._publicador = publicador
 
     def executar(self, codigo_exemplar: str) -> None:
         codigo = CodigoExemplar(codigo_exemplar)
@@ -89,8 +87,7 @@ class RegistrarDevolucao:
         livro = self._livros.buscar_por_isbn(emprestimo.isbn)
         livro.devolver(codigo)
         for evento in livro.recolher_eventos():
-            membro = self._membros.buscar(evento.cpf)
-            self._notificador.avisar_reserva_disponivel(membro, evento.titulo)
+            self._publicador.publicar(evento)
         self._livros.salvar(livro)
         self._emprestimos.salvar(emprestimo)
 
