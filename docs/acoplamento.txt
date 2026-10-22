@@ -1,0 +1,9 @@
+Imports entre camadas (origem -> destino):
+    dominio -> aplicacao: 0
+    dominio -> infra    : 0
+  aplicacao -> dominio  : 9
+  aplicacao -> infra    : 0
+      infra -> dominio  : 6
+      infra -> aplicacao: 0
+
+Dependências do domínio para fora: 0

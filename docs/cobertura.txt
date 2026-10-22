@@ -1,0 +1,33 @@
+........................................................................ [ 66%]
+....................................                                     [100%]
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.12.3-final-0 ________________
+
+Name                                Stmts   Miss  Cover   Missing
+-----------------------------------------------------------------
+src/sgb/__init__.py                     1      0   100%
+src/sgb/__main__.py                     2      2     0%   1-3
+src/sgb/aplicacao/__init__.py           0      0   100%
+src/sgb/aplicacao/assinantes.py         9      0   100%
+src/sgb/aplicacao/casos_de_uso.py     116      0   100%
+src/sgb/cli.py                         72     24    67%   30, 44, 48-49, 59-60, 64-65, 89, 97-99, 117-129
+src/sgb/composicao.py                  28      0   100%
+src/sgb/demo.py                        40      0   100%
+src/sgb/dominio/__init__.py             0      0   100%
+src/sgb/dominio/emprestimo.py          34      0   100%
+src/sgb/dominio/eventos.py              8      0   100%
+src/sgb/dominio/excecoes.py            29      0   100%
+src/sgb/dominio/exemplar.py            54      0   100%
+src/sgb/dominio/livro.py               86      2    98%   39, 58
+src/sgb/dominio/membro.py              19      0   100%
+src/sgb/dominio/portas.py              11      0   100%
+src/sgb/dominio/publicador.py          11      0   100%
+src/sgb/dominio/reserva.py              7      0   100%
+src/sgb/dominio/valores.py             59      0   100%
+src/sgb/infra/__init__.py               0      0   100%
+src/sgb/infra/memoria.py               45      0   100%
+src/sgb/infra/notificador.py            7      0   100%
+src/sgb/infra/relogio.py               11      1    91%   6
+-----------------------------------------------------------------
+TOTAL                                 649     29    96%
+108 passed in 0.34s
